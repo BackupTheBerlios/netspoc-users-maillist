@@ -1,0 +1,103 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Netspoc-users] All/any with netspoc? How to grant access to	public web server
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/netspoc-users/2008/index.html" >
+   <LINK REL="made" HREF="mailto:netspoc-users%40lists.berlios.de?Subject=Re%3A%20%5BNetspoc-users%5D%20All/any%20with%20netspoc%3F%20How%20to%20grant%20access%20to%0A%09public%20web%20server&In-Reply-To=%3CC6DA2932AE147A4EB5C131D07CC3FA2B120E76E0%40CYCLOPS.agcom.amgreetings.com%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000005.html">
+   <LINK REL="Next"  HREF="000007.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Netspoc-users] All/any with netspoc? How to grant access to	public web server</H1>
+    <B>MA Martin Andrews (5542)</B> 
+    <A HREF="mailto:netspoc-users%40lists.berlios.de?Subject=Re%3A%20%5BNetspoc-users%5D%20All/any%20with%20netspoc%3F%20How%20to%20grant%20access%20to%0A%09public%20web%20server&In-Reply-To=%3CC6DA2932AE147A4EB5C131D07CC3FA2B120E76E0%40CYCLOPS.agcom.amgreetings.com%3E"
+       TITLE="[Netspoc-users] All/any with netspoc? How to grant access to	public web server">MAndrews at ag.com
+       </A><BR>
+    <I>Wed Sep 24 04:11:29 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000005.html">[Netspoc-users] All/any with netspoc? How to grant access to public web server
+</A></li>
+        <LI>Next message: <A HREF="000007.html">[Netspoc-users] All/any with netspoc? How to grant access to	publicweb server
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#6">[ date ]</a>
+              <a href="thread.html#6">[ thread ]</a>
+              <a href="subject.html#6">[ subject ]</a>
+              <a href="author.html#6">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Alas this example is based on a real-world architecture we inherited. It
+is running IOS so I cant change that. I see the point netspoc is warning
+about and its good it reports the error. I do want the private network
+(and other privates attached to myrouter) to be able to reach this
+public host.
+
+I tried adding in the private network to the allowed sources:
+
+policy:pubwww = {
+    description = how to allow all?
+    user = any:internet, network:private;
+    permit src = user;
+        dst = host:www;
+        srv = service:http;
+}
+
+But I still get the same error:
+
+Error: Missing 'any' rule.
+ permit src=any:internet; dst=host:www; srv=service:http;
+ of policy:pubwww
+ can't be effective at router:myrouter.
+ There needs to be defined a similar rule with
+ src=auto_any:private
+...
+Aborted with 1 error(s)
+
+-----Original Message-----
+From: Heinz Knutzen [mailto:<A HREF="https://lists.berlios.de/mailman/listinfo/netspoc-users">heinz.knutzen at gmx.de</A>] 
+
+If you change the model of router:myrouter from IOS to some stateful
+model like IOS_FW, PIX or Linux
+the error would disappear.
+
+...
+
+The second line would permit traffic from your public network not only
+back to the internet, but to your private network at interface i2 as
+well.
+To get configured and generated rules in sync, Netspoc proposed to
+define a second rule which permits traffic from private to public.
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000005.html">[Netspoc-users] All/any with netspoc? How to grant access to public web server
+</A></li>
+	<LI>Next message: <A HREF="000007.html">[Netspoc-users] All/any with netspoc? How to grant access to	publicweb server
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#6">[ date ]</a>
+              <a href="thread.html#6">[ thread ]</a>
+              <a href="subject.html#6">[ subject ]</a>
+              <a href="author.html#6">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/netspoc-users">More information about the Netspoc-users
+mailing list</a><br>
+</body></html>

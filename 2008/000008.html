@@ -1,0 +1,91 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Netspoc-users] All/any with netspoc? How to grant access to	publicweb server
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/netspoc-users/2008/index.html" >
+   <LINK REL="made" HREF="mailto:netspoc-users%40lists.berlios.de?Subject=Re%3A%20%5BNetspoc-users%5D%20All/any%20with%20netspoc%3F%20How%20to%20grant%20access%20to%0A%09publicweb%20server&In-Reply-To=%3C48DBFB3D.3000109%40gmx.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000007.html">
+   
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Netspoc-users] All/any with netspoc? How to grant access to	publicweb server</H1>
+    <B>Heinz Knutzen</B> 
+    <A HREF="mailto:netspoc-users%40lists.berlios.de?Subject=Re%3A%20%5BNetspoc-users%5D%20All/any%20with%20netspoc%3F%20How%20to%20grant%20access%20to%0A%09publicweb%20server&In-Reply-To=%3C48DBFB3D.3000109%40gmx.de%3E"
+       TITLE="[Netspoc-users] All/any with netspoc? How to grant access to	publicweb server">heinz.knutzen at gmx.de
+       </A><BR>
+    <I>Thu Sep 25 22:57:33 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000007.html">[Netspoc-users] All/any with netspoc? How to grant access to	publicweb server
+</A></li>
+        
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#8">[ date ]</a>
+              <a href="thread.html#8">[ thread ]</a>
+              <a href="subject.html#8">[ subject ]</a>
+              <a href="author.html#8">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Your configuration is ok.
+You found a bug in netspoc.
+
+The configuration with HSRP created a topology with loops. Together with 
+stateless routers this is a situation where the checks for consistent 
+'any' rules have been too strong.
+
+Attached you will find a patch which modifies Netspoc.pm to do a more 
+relaxed check.
+I have applied this to my current development version as well.
+
+Thank you for this bug report.
+
+-----Original Message-----
+...
+In practice myrouter has an hsrp pair. It also has many private
+networks attached. I tried adding a couple more privates and then
+making a group for all the networks attached to them. I was then able
+to reference any:[group:privates] and all worked. Adding the hsrp
+partner caused trouble. Now I get:
+
+Error: Missing 'any' rule. permit src=any:internet; dst=host:www;
+srv=service:http; of policy:pubwww can't be effective at
+router:myrouter2. There needs to be defined a similar rule with
+src=auto_any:public
+
+-------------- next part --------------
+A non-text attachment was scrubbed...
+Name: stateless-src-any.patch
+Type: text/x-diff
+Size: 1323 bytes
+Desc: not available
+URL: &lt;<A HREF="https://lists.berlios.de/pipermail/netspoc-users/attachments/20080925/89277814/attachment.patch">https://lists.berlios.de/pipermail/netspoc-users/attachments/20080925/89277814/attachment.patch</A>&gt;
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000007.html">[Netspoc-users] All/any with netspoc? How to grant access to	publicweb server
+</A></li>
+	
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#8">[ date ]</a>
+              <a href="thread.html#8">[ thread ]</a>
+              <a href="subject.html#8">[ subject ]</a>
+              <a href="author.html#8">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/netspoc-users">More information about the Netspoc-users
+mailing list</a><br>
+</body></html>

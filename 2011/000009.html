@@ -1,0 +1,147 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Netspoc-users] NetSPoC 3.2 released
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/netspoc-users/2011/index.html" >
+   <LINK REL="made" HREF="mailto:netspoc-users%40lists.berlios.de?Subject=Re%3A%20%5BNetspoc-users%5D%20NetSPoC%203.2%20released&In-Reply-To=%3C4D20FBCF.9020706%40gmx.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   
+   
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Netspoc-users] NetSPoC 3.2 released</H1>
+    <B>Heinz Knutzen</B> 
+    <A HREF="mailto:netspoc-users%40lists.berlios.de?Subject=Re%3A%20%5BNetspoc-users%5D%20NetSPoC%203.2%20released&In-Reply-To=%3C4D20FBCF.9020706%40gmx.de%3E"
+       TITLE="[Netspoc-users] NetSPoC 3.2 released">heinz.knutzen at gmx.de
+       </A><BR>
+    <I>Sun Jan  2 23:27:27 CET 2011</I>
+    <P><UL>
+        
+        
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#9">[ date ]</a>
+              <a href="thread.html#9">[ thread ]</a>
+              <a href="subject.html#9">[ subject ]</a>
+              <a href="author.html#9">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>I just released Netspoc version 3.2.
+It is available at <A HREF="http://prdownload.berlios.de/netspoc/Netspoc-3.2.tar.gz">http://prdownload.berlios.de/netspoc/Netspoc-3.2.tar.gz</A>
+
+New features:
+     * Support for Cisco ASA devices as packet filter, as VPN gateway 
+and for LAN-to-LAN IPSec tunnels.
+     * Support &quot;easy VPN&quot; at Cisco VPN clients.
+     * Generated chains for Linux iptables are highly optimized now. 
+Deeply nested chains are generated to minimize the number of tests for 
+each checked packet.
+     * Support port address translation (PAT) to an interface for PIX 
+and ASA.
+
+Language:
+     * Changed syntax for defining crypto tunnels to support multiple 
+VPN gateways.
+     * Renamed attribute &quot;nat = ..&quot; at interface to &quot;bind_nat = ..&quot;. 
+This allows better distinction between binding and definition of NAT.
+     * Allow multiple NAT tags at attribute bind_nat of an interface. 
+This simplifies definition of NAT for devices with multiple interfaces.
+     * Extended concept of secondary packet filter to &quot;primary&quot; packet 
+filter. All rules which pass a primary filter are implemented as 
+secondary filters on other devices
+     * Enhanced policy definitions to support template rule-sets which 
+operate individually on each element of &quot;users&quot;. This uses new keyword 
+'foreach' and nested expressions with 'user'. This concept replaces 
+'any:[local]' from previous versions.
+     * Added automatic group &quot;network:[any:xx]&quot;, the group of all 
+networks inside a security domain.
+     * Removed &quot;interface:xx.[back]&quot;. This was not widely used and can 
+easily be expressed with complement: &quot;interface:xx.[all] &amp; ! 
+interface:xx.[auto]&quot;.
+     * Renamed &quot;interface:xx.[front]&quot; back to the old syntax 
+&quot;interface:xx.[auto]&quot; which was still valid syntax in previous versions.
+     * Added attribute &quot;crosslink&quot; for networks. A crosslink network 
+combines two or more routers to a cluster of routers. Filtering occurs 
+only at the outside interfaces of the cluster. The crosslink interfaces 
+permit any traffic because traffic has already been filtered by some 
+other device of the cluster.
+     * Added attribute &quot;no_in_acl&quot; for interfaces. With this attribute, 
+no incoming ACL is generated for an interface. Outgoing ACLs are added 
+to all other interfaces of the same device instead.
+     * Networks with isolated and promiscuous ports (RFC 5517) are 
+supported now. Added attribute &quot;isolated_ports&quot; at networks and 
+attribute &quot;promiscuous_port&quot; at interfaces. If a network has attribute 
+&quot;isolated_ports&quot;, hosts inside this network are not allowed to talk 
+directly to each other. Instead the traffic must go through an interface 
+which is marked as &quot;promiscuous_port&quot;.
+     * Hosts no longer support multiple IP addresses, but only single IP 
+addresses or ranges.
+     * Attribute &quot;owner&quot; no longer holds simple strings, but references 
+to one or more 'admin', which has name and email address.
+
+Other:
+     * Added the concept of 'private' configuration contexts. This 
+allows to partition the configuration files in a multi user environment 
+such that one user can't define rules for network objects which belong 
+to another user.
+     * Added consistency check: All interfaces and hosts of a network 
+must be located in that part of the network which doesn't overlap with 
+some subnet.
+     * Pathrestriction at a border interface of a loop is supported now. 
+Valid paths inside a loop can now be defined individually depending on 
+the interface where the loop is entered.
+     * Unmanaged device is allowed to have pathrestriction now.
+     * Processing for large topology with clusters of loops has been 
+optimized. A cluster of loops is a set of loops which are connected by a 
+single node (network or router).
+     * Checks for unenforceable, duplicate and redundant rules have been 
+added.
+     * A check for duplicate elements in groups has been added.
+     * iptables-restore is used now to load rules for iptables.
+     * Default values for command line options of netspoc can be defined 
+in a file named 'config' in toplevel directory of netspoc configuration.
+     * Added command line tool &quot;print-group&quot; which reads a netspoc 
+configuration and prints the contents of a group.
+
+Bug fixes:
+     * The result of interface.xx.[back] was always empty if interface 
+was located inside a loop.
+     * There was a bug when printing the result of check for missing 
+transient any rules. The result was only printed if some rule was 
+missing more than once.
+     * Fixed bug in check for missing transient any rules when comparing 
+stateless rules.
+
+For more changes and details look at <A HREF="http://netspoc.berlios.de/ChangeLog">http://netspoc.berlios.de/ChangeLog</A> .
+
+-- Heinz
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	
+	
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#9">[ date ]</a>
+              <a href="thread.html#9">[ thread ]</a>
+              <a href="subject.html#9">[ subject ]</a>
+              <a href="author.html#9">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/netspoc-users">More information about the Netspoc-users
+mailing list</a><br>
+</body></html>

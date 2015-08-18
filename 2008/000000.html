@@ -1,0 +1,131 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Netspoc-users] NetSPoC 3.1 released
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/netspoc-users/2008/index.html" >
+   <LINK REL="made" HREF="mailto:netspoc-users%40lists.berlios.de?Subject=Re%3A%20%5BNetspoc-users%5D%20NetSPoC%203.1%20released&In-Reply-To=%3C477BF687.9070905%40gmx.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   
+   <LINK REL="Next"  HREF="000001.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Netspoc-users] NetSPoC 3.1 released</H1>
+    <B>Heinz Knutzen</B> 
+    <A HREF="mailto:netspoc-users%40lists.berlios.de?Subject=Re%3A%20%5BNetspoc-users%5D%20NetSPoC%203.1%20released&In-Reply-To=%3C477BF687.9070905%40gmx.de%3E"
+       TITLE="[Netspoc-users] NetSPoC 3.1 released">heinz.knutzen at gmx.de
+       </A><BR>
+    <I>Wed Jan  2 21:39:35 CET 2008</I>
+    <P><UL>
+        
+        <LI>Next message: <A HREF="000001.html">[Netspoc-users] All/any with netspoc? How to grant access to public	web server
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#0">[ date ]</a>
+              <a href="thread.html#0">[ thread ]</a>
+              <a href="subject.html#0">[ subject ]</a>
+              <a href="author.html#0">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>I just released Netspoc version 3.1.
+It is available at <A HREF="http://prdownload.berlios.de/netspoc/netspoc-3.1.tar.gz">http://prdownload.berlios.de/netspoc/netspoc-3.1.tar.gz</A>
+
+New features:
+* Support for negotiated interfaces which dynamically get an IP address 
+out of an attached network has been added.
+* Support for loopback interfaces which are not attached to any network 
+has been added.
+* Support for Cisco VPN 3000 devices has been added, but currently isn't 
+well documented.
+
+Language:
+* Flags for services have been introduced. These flags modify the way in 
+which rules are applied to stateless devices or to devices in general. 
+As an example, it is now possible to define a rule for FTP traffic which 
+permits the data channel only at stateless devices, but not at stateful 
+devices.
+* New &quot;automatic&quot; groups have been introduced which allow to define new 
+groups from other groups or from the topology. Examples: The group of 
+networks which contain an already defined group of hosts. The group of 
+interfaces of a network. The group of security domains of an area.
+* Automatic groups of interfaces can be restricted to interfaces of 
+managed devices.
+* The concept of &quot;auto&quot; interfaces has been extended. 
+interface:router.[back] denotes the interface(s) which are on the 
+opposite side in respect to the other object in a rule. 
+interface:router.[auto], which denotes the interface(s) on the same 
+side, has been renamed to interface:router.[front]. But [auto] is still 
+supported for compatibility.
+* A simple means has been introduced to define an area which contains 
+the whole topology.
+* New syntax has been defined to individually select a secondary IP 
+address of an interface in a rule.
+* network:[local] denotes the network connected to an interface.
+* A feature from version 3.0 to individually define an interface as full 
+or secondary filter has been removed. This feature wasn't used anywhere, 
+but prevented a run-time optimization.
+* The following language elements are no longer supported, because they 
+can better be expressed by newly introduced automatic groups: &quot;every:x&quot;, 
+&quot;any:[all]&quot;, &quot;interface:[managed].x&quot;, &quot;interface:[all].x&quot;
+
+Other:
+* Pathrestrictions are added automatically for each set of virtual 
+interfaces now.
+* Enhanced command generation for Cisco PIX devices with dynamic NAT. If 
+multiple networks are mapped to a single dynamic pool, now a single 
+&quot;global&quot; command is generated, which is referenced by multiple &quot;nat&quot; 
+commands.
+* Added a check for &quot;transient any rules&quot;.
+ If we have a security domain any_A and two rules &quot;permit XX -&gt; any_A&quot; 
+and &quot;permit any_A -&gt; YY&quot; then this implies a rule &quot;permit XX -&gt; YY&quot; 
+which may not have been wanted. Netspoc now looks for this situation and 
+aborts if the implied rule is not explicitly defined.
+* Added a check to enforce that different hosts inside a network don't 
+have the same IP address.
+* Multiple optimizations were done which improve the run-time 
+performance for configurations with large rule sets and topologies.
+* New command line option &quot;-time_stamps&quot; shows run-time in seconds for 
+different compilation steps.
+
+Bug fixes:
+* Correctly handle the case were two different loops touch each other 
+directly. This occurs if one loop starts at a network A and the other 
+one at a router B and A and B are directly connected.
+* Added missing &quot;static&quot; entries at pix devices for networks which have 
+a dynamic NAT at some other device.
+* Fixed a bug where Netspoc aborted if an area was defined by attribute 
+&quot;anchor&quot;.
+* Fixed some problems with disabled interfaces.
+
+-- Heinz
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	
+	<LI>Next message: <A HREF="000001.html">[Netspoc-users] All/any with netspoc? How to grant access to public	web server
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#0">[ date ]</a>
+              <a href="thread.html#0">[ thread ]</a>
+              <a href="subject.html#0">[ subject ]</a>
+              <a href="author.html#0">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/netspoc-users">More information about the Netspoc-users
+mailing list</a><br>
+</body></html>

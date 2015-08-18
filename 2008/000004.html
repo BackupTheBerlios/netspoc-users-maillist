@@ -1,0 +1,168 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Netspoc-users] All/any with netspoc? How to grant access to	public web server
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/netspoc-users/2008/index.html" >
+   <LINK REL="made" HREF="mailto:netspoc-users%40lists.berlios.de?Subject=Re%3A%20%5BNetspoc-users%5D%20All/any%20with%20netspoc%3F%20How%20to%20grant%20access%20to%0A%09public%20web%20server&In-Reply-To=%3CC6DA2932AE147A4EB5C131D07CC3FA2B120E72E1%40CYCLOPS.agcom.amgreetings.com%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000003.html">
+   <LINK REL="Next"  HREF="000005.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Netspoc-users] All/any with netspoc? How to grant access to	public web server</H1>
+    <B>MA Martin Andrews (5542)</B> 
+    <A HREF="mailto:netspoc-users%40lists.berlios.de?Subject=Re%3A%20%5BNetspoc-users%5D%20All/any%20with%20netspoc%3F%20How%20to%20grant%20access%20to%0A%09public%20web%20server&In-Reply-To=%3CC6DA2932AE147A4EB5C131D07CC3FA2B120E72E1%40CYCLOPS.agcom.amgreetings.com%3E"
+       TITLE="[Netspoc-users] All/any with netspoc? How to grant access to	public web server">MAndrews at ag.com
+       </A><BR>
+    <I>Tue Sep 23 05:14:40 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000003.html">[Netspoc-users] All/any with netspoc? How to grant access to	public web server
+</A></li>
+        <LI>Next message: <A HREF="000005.html">[Netspoc-users] All/any with netspoc? How to grant access to public web server
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#4">[ date ]</a>
+              <a href="thread.html#4">[ thread ]</a>
+              <a href="subject.html#4">[ subject ]</a>
+              <a href="author.html#4">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Thanks for the speedy response(s).
+
+I get the subnet_of method and by setting -strict_subnets=no that would
+be less tedious, but your answer regarding any is intriguing because I
+think it will provide the most features when I understand it. The any
+worked in the simple example I provided but when I start to expand the
+topology with another network off or myrouter I get the following error:
+
+Error: Missing 'any' rule.
+ permit src=any:internet; dst=host:www; srv=service:http;
+ of policy:pubwww
+ can't be effective at router:myrouter.
+ There needs to be defined a similar rule with
+ src=auto_any:private
+
+What does this error mean?
+
+Example input and full error messages below.
+
+-------------------- Input ------------------------
+network:public = {
+    ip = 2.2.2.0/24;
+    host:www = { ip = 2.2.2.10; }
+}
+
+network:private = {
+    ip = 192.168.0.0/24;
+}
+
+any:internet = {
+    link = network:internet;
+}
+
+network:internet = {
+    unnumbered;
+}
+
+network:isp-me = {
+    ip = 2.2.3.0/30;
+}
+
+router:isp0 = {
+    interface:isp-me = {
+        ip = 2.2.3.1;
+    }
+    interface:internet = {
+    }
+}
+
+router:myrouter = {
+    managed = full;
+    model = IOS;
+    interface:isp-me= {
+        ip = 2.2.3.2;
+        routing = manual;
+        hardware = i0;
+    }
+    interface:public = {
+        ip = 2.2.2.1;
+        hardware = i1;
+    }
+    interface:private = {
+        ip = 192.168.0.1;
+        hardware = i2;
+    }
+}
+
+service:http = tcp 80;
+
+policy:pubwww = {
+    description = how to allow all?
+    user = any:internet;
+    permit src = user;
+        dst = host:www;
+        srv = service:http;
+}
+
+-------------------- Error ------------------------
+
+network$ ./bin/netspoc -strict_subnet=warn intest out2
+
+Network Security Policy Compiler, version 2.281
+Read 2 routers, 4 networks, 1 hosts
+Read 1 services, 0 service groups
+Read 0 groups, 1 policies
+Arranging services
+Linking topology
+Distributing NAT
+Finding subnets
+Preparing security domains and areas
+Preparing fast path traversal
+Converting hosts to subnets
+Expanding policies
+Preparing crypto tunnels and expanding crypto rules
+Optimizing globally
+Checking rules with 'any' objects
+Error: Missing 'any' rule.
+ permit src=any:internet; dst=host:www; srv=service:http;
+ of policy:pubwww
+ can't be effective at router:myrouter.
+ There needs to be defined a similar rule with
+ src=auto_any:private
+Finding routes and statics
+Checking for duplicate routes
+Generating reverse rules for stateless routers
+Marking rules for secondary optimization
+Aborted with 1 error(s)
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000003.html">[Netspoc-users] All/any with netspoc? How to grant access to	public web server
+</A></li>
+	<LI>Next message: <A HREF="000005.html">[Netspoc-users] All/any with netspoc? How to grant access to public web server
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#4">[ date ]</a>
+              <a href="thread.html#4">[ thread ]</a>
+              <a href="subject.html#4">[ subject ]</a>
+              <a href="author.html#4">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/netspoc-users">More information about the Netspoc-users
+mailing list</a><br>
+</body></html>

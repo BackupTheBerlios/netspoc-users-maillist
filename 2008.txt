@@ -1,0 +1,818 @@
+From heinz.knutzen at gmx.de  Wed Jan  2 21:39:35 2008
+From: heinz.knutzen at gmx.de (Heinz Knutzen)
+Date: Wed, 02 Jan 2008 21:39:35 +0100
+Subject: [Netspoc-users] NetSPoC 3.1 released
+Message-ID: <477BF687.9070905@gmx.de>
+
+I just released Netspoc version 3.1.
+It is available at http://prdownload.berlios.de/netspoc/netspoc-3.1.tar.gz
+
+New features:
+* Support for negotiated interfaces which dynamically get an IP address 
+out of an attached network has been added.
+* Support for loopback interfaces which are not attached to any network 
+has been added.
+* Support for Cisco VPN 3000 devices has been added, but currently isn't 
+well documented.
+
+Language:
+* Flags for services have been introduced. These flags modify the way in 
+which rules are applied to stateless devices or to devices in general. 
+As an example, it is now possible to define a rule for FTP traffic which 
+permits the data channel only at stateless devices, but not at stateful 
+devices.
+* New "automatic" groups have been introduced which allow to define new 
+groups from other groups or from the topology. Examples: The group of 
+networks which contain an already defined group of hosts. The group of 
+interfaces of a network. The group of security domains of an area.
+* Automatic groups of interfaces can be restricted to interfaces of 
+managed devices.
+* The concept of "auto" interfaces has been extended. 
+interface:router.[back] denotes the interface(s) which are on the 
+opposite side in respect to the other object in a rule. 
+interface:router.[auto], which denotes the interface(s) on the same 
+side, has been renamed to interface:router.[front]. But [auto] is still 
+supported for compatibility.
+* A simple means has been introduced to define an area which contains 
+the whole topology.
+* New syntax has been defined to individually select a secondary IP 
+address of an interface in a rule.
+* network:[local] denotes the network connected to an interface.
+* A feature from version 3.0 to individually define an interface as full 
+or secondary filter has been removed. This feature wasn't used anywhere, 
+but prevented a run-time optimization.
+* The following language elements are no longer supported, because they 
+can better be expressed by newly introduced automatic groups: "every:x", 
+"any:[all]", "interface:[managed].x", "interface:[all].x"
+
+Other:
+* Pathrestrictions are added automatically for each set of virtual 
+interfaces now.
+* Enhanced command generation for Cisco PIX devices with dynamic NAT. If 
+multiple networks are mapped to a single dynamic pool, now a single 
+"global" command is generated, which is referenced by multiple "nat" 
+commands.
+* Added a check for "transient any rules".
+ If we have a security domain any_A and two rules "permit XX -> any_A" 
+and "permit any_A -> YY" then this implies a rule "permit XX -> YY" 
+which may not have been wanted. Netspoc now looks for this situation and 
+aborts if the implied rule is not explicitly defined.
+* Added a check to enforce that different hosts inside a network don't 
+have the same IP address.
+* Multiple optimizations were done which improve the run-time 
+performance for configurations with large rule sets and topologies.
+* New command line option "-time_stamps" shows run-time in seconds for 
+different compilation steps.
+
+Bug fixes:
+* Correctly handle the case were two different loops touch each other 
+directly. This occurs if one loop starts at a network A and the other 
+one at a router B and A and B are directly connected.
+* Added missing "static" entries at pix devices for networks which have 
+a dynamic NAT at some other device.
+* Fixed a bug where Netspoc aborted if an area was defined by attribute 
+"anchor".
+* Fixed some problems with disabled interfaces.
+
+-- Heinz
+
+
+
+From MAndrews at ag.com  Mon Sep 22 00:01:58 2008
+From: MAndrews at ag.com (MA Martin Andrews (5542))
+Date: Sun, 21 Sep 2008 18:01:58 -0400
+Subject: [Netspoc-users] All/any with netspoc? How to grant access to public
+	web server
+Message-ID: <C6DA2932AE147A4EB5C131D07CC3FA2B11FF22FA@CYCLOPS.agcom.amgreetings.com>
+
+I have just discovered netspoc and it looks to be incredibly useful. I
+started building some little trials for our networks but I am really
+struggling with how the "any" and "area" syntax works. The most basic
+issue I am facing is how to grant access to a public service - say a
+public web server. I tried to set up a simple example with my ISP's
+router provides access to the "internet": 0.0.0.0/0. The resulting
+ruleset does not allow any access. I suspect I am going about this all
+wrong. What is the right way to do this?
+
+-------------------- Input -----------------------------------
+
+network:public = {
+    ip = 2.2.2.0/24;
+    host:www = { ip = 2.2.2.10; }
+}
+
+network:internet = {
+    ip = 0.0.0.0/0;
+    route_hint;
+}
+
+network:isp-me = {
+    ip = 2.2.3.0/30;
+}
+
+router:isp0 = {
+    interface:isp-me = {
+        ip = 2.2.3.1;
+    }
+    interface:internet = {
+    }
+}
+
+router:myrouter = {
+    managed = full;
+    model = IOS;
+    interface:public = {
+        ip = 2.2.2.1;
+        hardware = i0;
+    }
+    interface:isp-me= {
+        ip = 2.2.3.2;
+        hardware = i0;
+    }
+}
+
+service:http = tcp 80;
+
+policy:pubwww = {
+    description = how to allow all?
+    user = network:internet;
+    permit src = user;
+        dst = host:www;
+        srv = service:http;
+}
+
+-------------------------------- Output
+---------------------------------
+
+! Generated by Network Security Policy Compiler, version 2.281
+
+! [ BEGIN router:myrouter ]
+! [ Model = IOS ]
+! [ Routing ]
+! [ ACL ]
+ip access-list extended i0_in
+ deny ip any  any
+interface i0
+ ip access-group i0_in in
+
+! [ END router:myrouter ]
+
+
+From heinz.knutzen at gmx.de  Mon Sep 22 11:03:01 2008
+From: heinz.knutzen at gmx.de (Heinz Knutzen)
+Date: Mon, 22 Sep 2008 11:03:01 +0200
+Subject: [Netspoc-users] All/any with netspoc? How to grant access to
+	publicweb server
+Message-ID: <20080922090301.183090@gmx.net>
+
+Hi Martin,
+
+there are two problems with your netspoc configuration.
+
+1. 
+A network with attribute 'route_hint' must not be referenced in a rule.
+Unfortunately version 2.281 of netspoc silently ignores such rules.
+Therefore your policy:pubwww does nothing.
+You should use attribute 'subnet_of' instead.
+(Attribute 'route_hint' should only be used to get optimized static routing entries.)
+
+2.
+The hardware interfaces of router:myrouter should use different names, e.g. 'e0' and 'e1'.
+Otherwise the generated configuration will be mixed for both interfaces.
+
+With this changes you will get a reasonable result:
+
+-------------------- Input ------------------------
+
+network:public = {
+    ip = 2.2.2.0/24;
+    subnet_of = network:internet;
+    host:www = { ip = 2.2.2.10; }
+}
+
+network:internet = {
+    ip = 0.0.0.0/0;
+#    route_hint;
+}
+
+network:isp-me = {
+    ip = 2.2.3.0/30;
+    subnet_of = network:internet;
+}
+
+router:isp0 = {
+    interface:isp-me = {
+        ip = 2.2.3.1;
+    }
+    interface:internet = {
+    }
+}
+
+router:myrouter = {
+    managed = full;
+    model = IOS;
+    interface:public = {
+        ip = 2.2.2.1;
+        hardware = i0;
+    }
+    interface:isp-me= {
+        ip = 2.2.3.2;
+        hardware = i1;
+    }
+}
+
+service:http = tcp 80;
+
+policy:pubwww = {
+    description = how to allow all?
+    user = network:internet;
+    permit src = user;
+        dst = host:www;
+        srv = service:http;
+}
+
+-------------------- Output ------------------------
+# ./netspoc -noauto_default_route andrew  code
+Network Security Policy Compiler, version 2.281
+Read 2 routers, 3 networks, 1 hosts
+Read 1 services, 0 service groups
+Read 0 groups, 1 policies
+Arranging services
+Linking topology
+Distributing NAT
+Finding subnets
+Preparing security domains and areas
+Preparing fast path traversal
+Converting hosts to subnets
+Expanding policies
+Preparing crypto tunnels and expanding crypto rules
+Optimizing globally
+Checking rules with 'any' objects
+Finding routes and statics
+Checking for duplicate routes
+Generating reverse rules for stateless routers
+Marking rules for secondary optimization
+Optimizing globally
+Distributing rules
+Optimizing locally
+Printing code
+
+# cat code/myrouter 
+! Generated by Network Security Policy Compiler, version 2.281
+
+! [ BEGIN router:myrouter ]
+! [ Model = IOS ]
+! [ Routing ]
+ip route 0.0.0.0 0.0.0.0 2.2.3.1
+! [ ACL ]
+ip access-list extended i0_in
+ deny ip any  host 2.2.2.1 
+ deny ip any  host 2.2.3.2 
+ permit tcp host 2.2.2.10  any  established
+ deny ip any  any 
+interface i0
+ ip access-group i0_in in
+
+ip access-list extended i1_in
+ deny ip any  host 2.2.2.1 
+ deny ip any  host 2.2.3.2 
+ permit tcp any  host 2.2.2.10 eq 80
+ deny ip any  any 
+interface i1
+ ip access-group i1_in in
+
+! [ END router:myrouter ]
+
+
+-- 
+GMX Kostenlose Spiele: Einfach online spielen und Spa? haben mit Pastry Passion!
+http://games.entertainment.gmx.net/de/entertainment/games/free/puzzle/6169196
+
+
+From heinz.knutzen at gmx.de  Mon Sep 22 21:40:43 2008
+From: heinz.knutzen at gmx.de (Heinz Knutzen)
+Date: Mon, 22 Sep 2008 21:40:43 +0200
+Subject: [Netspoc-users] All/any with netspoc? How to grant access to
+	public web server
+In-Reply-To: <20080922090301.183090@gmx.net>
+References: <20080922090301.183090@gmx.net>
+Message-ID: <48D7F4BB.8080109@gmx.de>
+
+In my last proposal we had to add a line "subnet_of = network:internet;" 
+to each network definition.
+This was tedious.
+
+Below you will find another configuration which uses an 'any' object to 
+represent access from the internet. With this solution we avoid to 
+define a network 0.0.0.0/0. Hence we have no problem with unwanted 
+subnet relations.
+
+This configuration wont generate a static route for 0.0.0.0/0 because it 
+doesn't know about this network. Routing for interface:myrouter.isp-me 
+has been disabled by "routing = manual;".
+
+------------------ input -------------------
+any:internet = { link = network:isp; }
+
+network:isp = {
+    ip = 1.1.1.0/24;
+}
+
+router:isp0 = {
+    interface:isp;
+    interface:isp-me = {
+        ip = 2.2.3.1;
+    }
+}
+
+network:isp-me = {
+    ip = 2.2.3.0/30;
+}
+
+router:myrouter = {
+    managed = full;
+    model = IOS;
+    interface:isp-me= {
+        ip = 2.2.3.2;
+        routing = manual;
+        hardware = i1;
+    }
+    interface:public = {
+        ip = 2.2.2.1;
+        hardware = i0;
+    }
+}
+
+network:public = {
+    ip = 2.2.2.0/24;
+    host:www = { ip = 2.2.2.10; }
+}
+
+service:http = tcp 80;
+
+policy:pubwww = {
+    description = how to allow all?
+    user = any:internet;
+    permit src = user;
+        dst = host:www;
+        srv = service:http;
+}
+
+-------------------- Output ------------------------
+
+# ./netspoc martin code
+Network Security Policy Compiler, version 2.281
+Read 2 routers, 3 networks, 1 hosts
+Read 1 services, 0 service groups
+Read 0 groups, 1 policies
+Arranging services
+Linking topology
+Distributing NAT
+Finding subnets
+Preparing security domains and areas
+Preparing fast path traversal
+Converting hosts to subnets
+Expanding policies
+Preparing crypto tunnels and expanding crypto rules
+Optimizing globally
+Checking rules with 'any' objects
+Finding routes and statics
+Checking for duplicate routes
+Generating reverse rules for stateless routers
+Marking rules for secondary optimization
+Optimizing globally
+Distributing rules
+Optimizing locally
+Printing code
+
+# cat code/myrouter
+! Generated by Network Security Policy Compiler, version 2.281
+
+! [ BEGIN router:myrouter ]
+! [ Model = IOS ]
+! [ Routing ]
+! [ ACL ]
+ip access-list extended i1_in
+ deny ip any  host 2.2.3.2
+ deny ip any  host 2.2.2.1
+ permit tcp any  host 2.2.2.10 eq 80
+ deny ip any  any
+interface i1
+ ip access-group i1_in in
+
+ip access-list extended i0_in
+ deny ip any  host 2.2.3.2
+ deny ip any  host 2.2.2.1
+ permit tcp host 2.2.2.10  any  established
+ deny ip any  any
+interface i0
+ ip access-group i0_in in
+
+! [ END router:myrouter ]
+
+
+
+
+From MAndrews at ag.com  Tue Sep 23 05:14:40 2008
+From: MAndrews at ag.com (MA Martin Andrews (5542))
+Date: Mon, 22 Sep 2008 23:14:40 -0400
+Subject: [Netspoc-users] All/any with netspoc? How to grant access to
+	public web server
+In-Reply-To: <48D7F4BB.8080109@gmx.de>
+References: <20080922090301.183090@gmx.net> <48D7F4BB.8080109@gmx.de>
+Message-ID: <C6DA2932AE147A4EB5C131D07CC3FA2B120E72E1@CYCLOPS.agcom.amgreetings.com>
+
+Thanks for the speedy response(s).
+
+I get the subnet_of method and by setting -strict_subnets=no that would
+be less tedious, but your answer regarding any is intriguing because I
+think it will provide the most features when I understand it. The any
+worked in the simple example I provided but when I start to expand the
+topology with another network off or myrouter I get the following error:
+
+Error: Missing 'any' rule.
+ permit src=any:internet; dst=host:www; srv=service:http;
+ of policy:pubwww
+ can't be effective at router:myrouter.
+ There needs to be defined a similar rule with
+ src=auto_any:private
+
+What does this error mean?
+
+Example input and full error messages below.
+
+-------------------- Input ------------------------
+network:public = {
+    ip = 2.2.2.0/24;
+    host:www = { ip = 2.2.2.10; }
+}
+
+network:private = {
+    ip = 192.168.0.0/24;
+}
+
+any:internet = {
+    link = network:internet;
+}
+
+network:internet = {
+    unnumbered;
+}
+
+network:isp-me = {
+    ip = 2.2.3.0/30;
+}
+
+router:isp0 = {
+    interface:isp-me = {
+        ip = 2.2.3.1;
+    }
+    interface:internet = {
+    }
+}
+
+router:myrouter = {
+    managed = full;
+    model = IOS;
+    interface:isp-me= {
+        ip = 2.2.3.2;
+        routing = manual;
+        hardware = i0;
+    }
+    interface:public = {
+        ip = 2.2.2.1;
+        hardware = i1;
+    }
+    interface:private = {
+        ip = 192.168.0.1;
+        hardware = i2;
+    }
+}
+
+service:http = tcp 80;
+
+policy:pubwww = {
+    description = how to allow all?
+    user = any:internet;
+    permit src = user;
+        dst = host:www;
+        srv = service:http;
+}
+
+-------------------- Error ------------------------
+
+network$ ./bin/netspoc -strict_subnet=warn intest out2
+
+Network Security Policy Compiler, version 2.281
+Read 2 routers, 4 networks, 1 hosts
+Read 1 services, 0 service groups
+Read 0 groups, 1 policies
+Arranging services
+Linking topology
+Distributing NAT
+Finding subnets
+Preparing security domains and areas
+Preparing fast path traversal
+Converting hosts to subnets
+Expanding policies
+Preparing crypto tunnels and expanding crypto rules
+Optimizing globally
+Checking rules with 'any' objects
+Error: Missing 'any' rule.
+ permit src=any:internet; dst=host:www; srv=service:http;
+ of policy:pubwww
+ can't be effective at router:myrouter.
+ There needs to be defined a similar rule with
+ src=auto_any:private
+Finding routes and statics
+Checking for duplicate routes
+Generating reverse rules for stateless routers
+Marking rules for secondary optimization
+Aborted with 1 error(s)
+
+
+From heinz.knutzen at gmx.de  Tue Sep 23 18:22:55 2008
+From: heinz.knutzen at gmx.de (Heinz Knutzen)
+Date: Tue, 23 Sep 2008 18:22:55 +0200
+Subject: [Netspoc-users] All/any with netspoc? How to grant access to
+ public web server
+In-Reply-To: <C6DA2932AE147A4EB5C131D07CC3FA2B120E72E1@CYCLOPS.agcom.amgreetings.com>
+References: <20080922090301.183090@gmx.net> <48D7F4BB.8080109@gmx.de>
+	<C6DA2932AE147A4EB5C131D07CC3FA2B120E72E1@CYCLOPS.agcom.amgreetings.com>
+Message-ID: <48D917DF.1010608@gmx.de>
+
+If you change the model of router:myrouter from IOS to some stateful model like IOS_FW, PIX or Linux
+the error would disappear.
+
+The error is a bit complicate to explain.
+a) Netspoc generates rules which only filter ingress traffic.
+b) For stateless devices, Netspoc generates reverse rules which allow answer packets.
+
+Your policy:pubwww results in two ACL lines for router:myrouter :
+i0: permit tcp any host 2.2.2.10 eq 80
+i1: permit tcp host 2.2.2.10 any established
+
+The second line would permit traffic from your public network not only back to the internet, but to your private network at interface i2 as well.
+To get configured and generated rules in sync, Netspoc proposed to define a second rule which permits traffic from private to public.
+
+
+
+MA Martin Andrews (5542) schrieb:
+> Thanks for the speedy response(s).
+>
+> I get the subnet_of method and by setting -strict_subnets=no that would
+> be less tedious, but your answer regarding any is intriguing because I
+> think it will provide the most features when I understand it. The any
+> worked in the simple example I provided but when I start to expand the
+> topology with another network off or myrouter I get the following error:
+>
+> Error: Missing 'any' rule.
+>  permit src=any:internet; dst=host:www; srv=service:http;
+>  of policy:pubwww
+>  can't be effective at router:myrouter.
+>  There needs to be defined a similar rule with
+>  src=auto_any:private
+>
+> What does this error mean?
+>
+> Example input and full error messages below.
+>
+> -------------------- Input ------------------------
+> network:public = {
+>     ip = 2.2.2.0/24;
+>     host:www = { ip = 2.2.2.10; }
+> }
+>
+> network:private = {
+>     ip = 192.168.0.0/24;
+> }
+>
+> any:internet = {
+>     link = network:internet;
+> }
+>
+> network:internet = {
+>     unnumbered;
+> }
+>
+> network:isp-me = {
+>     ip = 2.2.3.0/30;
+> }
+>
+> router:isp0 = {
+>     interface:isp-me = {
+>         ip = 2.2.3.1;
+>     }
+>     interface:internet = {
+>     }
+> }
+>
+> router:myrouter = {
+>     managed = full;
+>     model = IOS;
+>     interface:isp-me= {
+>         ip = 2.2.3.2;
+>         routing = manual;
+>         hardware = i0;
+>     }
+>     interface:public = {
+>         ip = 2.2.2.1;
+>         hardware = i1;
+>     }
+>     interface:private = {
+>         ip = 192.168.0.1;
+>         hardware = i2;
+>     }
+> }
+>
+> service:http = tcp 80;
+>
+> policy:pubwww = {
+>     description = how to allow all?
+>     user = any:internet;
+>     permit src = user;
+>         dst = host:www;
+>         srv = service:http;
+> }
+>
+> -------------------- Error ------------------------
+>
+> network$ ./bin/netspoc -strict_subnet=warn intest out2
+>
+> Network Security Policy Compiler, version 2.281
+> Read 2 routers, 4 networks, 1 hosts
+> Read 1 services, 0 service groups
+> Read 0 groups, 1 policies
+> Arranging services
+> Linking topology
+> Distributing NAT
+> Finding subnets
+> Preparing security domains and areas
+> Preparing fast path traversal
+> Converting hosts to subnets
+> Expanding policies
+> Preparing crypto tunnels and expanding crypto rules
+> Optimizing globally
+> Checking rules with 'any' objects
+> Error: Missing 'any' rule.
+>  permit src=any:internet; dst=host:www; srv=service:http;
+>  of policy:pubwww
+>  can't be effective at router:myrouter.
+>  There needs to be defined a similar rule with
+>  src=auto_any:private
+> Finding routes and statics
+> Checking for duplicate routes
+> Generating reverse rules for stateless routers
+> Marking rules for secondary optimization
+> Aborted with 1 error(s)
+> _______________________________________________
+> Netspoc-users mailing list
+> Netspoc-users at lists.berlios.de
+> https://lists.berlios.de/mailman/listinfo/netspoc-users
+>
+>   
+
+
+
+From MAndrews at ag.com  Wed Sep 24 04:11:29 2008
+From: MAndrews at ag.com (MA Martin Andrews (5542))
+Date: Tue, 23 Sep 2008 22:11:29 -0400
+Subject: [Netspoc-users] All/any with netspoc? How to grant access to
+	public web server
+In-Reply-To: <48D917DF.1010608@gmx.de>
+References: <20080922090301.183090@gmx.net> <48D7F4BB.8080109@gmx.de>
+	<C6DA2932AE147A4EB5C131D07CC3FA2B120E72E1@CYCLOPS.agcom.amgreetings.com>
+	<48D917DF.1010608@gmx.de>
+Message-ID: <C6DA2932AE147A4EB5C131D07CC3FA2B120E76E0@CYCLOPS.agcom.amgreetings.com>
+
+Alas this example is based on a real-world architecture we inherited. It
+is running IOS so I cant change that. I see the point netspoc is warning
+about and its good it reports the error. I do want the private network
+(and other privates attached to myrouter) to be able to reach this
+public host.
+
+I tried adding in the private network to the allowed sources:
+
+policy:pubwww = {
+    description = how to allow all?
+    user = any:internet, network:private;
+    permit src = user;
+        dst = host:www;
+        srv = service:http;
+}
+
+But I still get the same error:
+
+Error: Missing 'any' rule.
+ permit src=any:internet; dst=host:www; srv=service:http;
+ of policy:pubwww
+ can't be effective at router:myrouter.
+ There needs to be defined a similar rule with
+ src=auto_any:private
+...
+Aborted with 1 error(s)
+
+-----Original Message-----
+From: Heinz Knutzen [mailto:heinz.knutzen at gmx.de] 
+
+If you change the model of router:myrouter from IOS to some stateful
+model like IOS_FW, PIX or Linux
+the error would disappear.
+
+...
+
+The second line would permit traffic from your public network not only
+back to the internet, but to your private network at interface i2 as
+well.
+To get configured and generated rules in sync, Netspoc proposed to
+define a second rule which permits traffic from private to public.
+
+
+
+From heinz.knutzen at gmx.de  Wed Sep 24 11:50:46 2008
+From: heinz.knutzen at gmx.de (Heinz Knutzen)
+Date: Wed, 24 Sep 2008 11:50:46 +0200
+Subject: [Netspoc-users] All/any with netspoc? How to grant access to
+	publicweb server
+Message-ID: <20080924095046.36590@gmx.net>
+
+It isn't sufficient to add network:private.
+You need to allow access for 'any' from source 'private'.
+Simply use this line in policy:pubwww:
+    user = any:internet, any:[network:private];
+
+Alternatively you could define 
+    any:private = { link = network:private; }
+and use this line
+    user = any:internet, any:private;
+
+-----Original Message-----
+...
+I tried adding in the private network to the allowed sources:
+
+policy:pubwww = {
+    description = how to allow all?
+    user = any:internet, network:private;
+    permit src = user;
+        dst = host:www;
+        srv = service:http;
+}
+
+But I still get the same error:
+
+Error: Missing 'any' rule.
+ permit src=any:internet; dst=host:www; srv=service:http;
+ of policy:pubwww
+ can't be effective at router:myrouter.
+ There needs to be defined a similar rule with
+ src=auto_any:private
+
+-- 
+GMX Kostenlose Spiele: Einfach online spielen und Spa? haben mit Pastry Passion!
+http://games.entertainment.gmx.net/de/entertainment/games/free/puzzle/6169196
+
+
+From heinz.knutzen at gmx.de  Thu Sep 25 22:57:33 2008
+From: heinz.knutzen at gmx.de (Heinz Knutzen)
+Date: Thu, 25 Sep 2008 22:57:33 +0200
+Subject: [Netspoc-users] All/any with netspoc? How to grant access to
+	publicweb server
+In-Reply-To: <C6DA2932AE147A4EB5C131D07CC3FA2B120E7AA6@CYCLOPS.agcom.amgreetings.com>
+References: <20080924095046.36590@gmx.net>
+	<C6DA2932AE147A4EB5C131D07CC3FA2B120E7AA6@CYCLOPS.agcom.amgreetings.com>
+Message-ID: <48DBFB3D.3000109@gmx.de>
+
+Your configuration is ok.
+You found a bug in netspoc.
+
+The configuration with HSRP created a topology with loops. Together with 
+stateless routers this is a situation where the checks for consistent 
+'any' rules have been too strong.
+
+Attached you will find a patch which modifies Netspoc.pm to do a more 
+relaxed check.
+I have applied this to my current development version as well.
+
+Thank you for this bug report.
+
+-----Original Message-----
+...
+In practice myrouter has an hsrp pair. It also has many private
+networks attached. I tried adding a couple more privates and then
+making a group for all the networks attached to them. I was then able
+to reference any:[group:privates] and all worked. Adding the hsrp
+partner caused trouble. Now I get:
+
+Error: Missing 'any' rule. permit src=any:internet; dst=host:www;
+srv=service:http; of policy:pubwww can't be effective at
+router:myrouter2. There needs to be defined a similar rule with
+src=auto_any:public
+
+-------------- next part --------------
+A non-text attachment was scrubbed...
+Name: stateless-src-any.patch
+Type: text/x-diff
+Size: 1323 bytes
+Desc: not available
+URL: <https://lists.berlios.de/pipermail/netspoc-users/attachments/20080925/89277814/attachment.patch>
+

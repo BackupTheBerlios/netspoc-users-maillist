@@ -1,0 +1,95 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [Netspoc-users] All/any with netspoc? How to grant access to	publicweb server
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/netspoc-users/2008/index.html" >
+   <LINK REL="made" HREF="mailto:netspoc-users%40lists.berlios.de?Subject=Re%3A%20%5BNetspoc-users%5D%20All/any%20with%20netspoc%3F%20How%20to%20grant%20access%20to%0A%09publicweb%20server&In-Reply-To=%3C20080924095046.36590%40gmx.net%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000006.html">
+   <LINK REL="Next"  HREF="000008.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[Netspoc-users] All/any with netspoc? How to grant access to	publicweb server</H1>
+    <B>Heinz Knutzen</B> 
+    <A HREF="mailto:netspoc-users%40lists.berlios.de?Subject=Re%3A%20%5BNetspoc-users%5D%20All/any%20with%20netspoc%3F%20How%20to%20grant%20access%20to%0A%09publicweb%20server&In-Reply-To=%3C20080924095046.36590%40gmx.net%3E"
+       TITLE="[Netspoc-users] All/any with netspoc? How to grant access to	publicweb server">heinz.knutzen at gmx.de
+       </A><BR>
+    <I>Wed Sep 24 11:50:46 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000006.html">[Netspoc-users] All/any with netspoc? How to grant access to	public web server
+</A></li>
+        <LI>Next message: <A HREF="000008.html">[Netspoc-users] All/any with netspoc? How to grant access to	publicweb server
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#7">[ date ]</a>
+              <a href="thread.html#7">[ thread ]</a>
+              <a href="subject.html#7">[ subject ]</a>
+              <a href="author.html#7">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>It isn't sufficient to add network:private.
+You need to allow access for 'any' from source 'private'.
+Simply use this line in policy:pubwww:
+    user = any:internet, any:[network:private];
+
+Alternatively you could define 
+    any:private = { link = network:private; }
+and use this line
+    user = any:internet, any:private;
+
+-----Original Message-----
+...
+I tried adding in the private network to the allowed sources:
+
+policy:pubwww = {
+    description = how to allow all?
+    user = any:internet, network:private;
+    permit src = user;
+        dst = host:www;
+        srv = service:http;
+}
+
+But I still get the same error:
+
+Error: Missing 'any' rule.
+ permit src=any:internet; dst=host:www; srv=service:http;
+ of policy:pubwww
+ can't be effective at router:myrouter.
+ There needs to be defined a similar rule with
+ src=auto_any:private
+
+-- 
+GMX Kostenlose Spiele: Einfach online spielen und Spa&#223; haben mit Pastry Passion!
+<A HREF="http://games.entertainment.gmx.net/de/entertainment/games/free/puzzle/6169196">http://games.entertainment.gmx.net/de/entertainment/games/free/puzzle/6169196</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000006.html">[Netspoc-users] All/any with netspoc? How to grant access to	public web server
+</A></li>
+	<LI>Next message: <A HREF="000008.html">[Netspoc-users] All/any with netspoc? How to grant access to	publicweb server
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#7">[ date ]</a>
+              <a href="thread.html#7">[ thread ]</a>
+              <a href="subject.html#7">[ subject ]</a>
+              <a href="author.html#7">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/netspoc-users">More information about the Netspoc-users
+mailing list</a><br>
+</body></html>
